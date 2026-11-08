@@ -1,0 +1,33 @@
+# Entornos
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# IDEs
+.idea/
+.vscode/
+
+# Datos pesados (WiSig) y resultados generados
+data/*
+!data/.gitkeep
+results/*
+!results/.gitkeep
+
+# LaTeX
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.synctex.gz
+report/*.fls
+report/*.fdb_latexmk
+
+# SO
+.DS_Store
+Thumbs.db
