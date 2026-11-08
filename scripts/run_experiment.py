@@ -18,23 +18,23 @@ from src import data as D, distances as M, encoding as E, preprocessing as P
 TARGET_AB, TARGET_AC = 0.9, 0.3
 
 
-def build_abc(index, kind, alpha, n_avg, tx_a, tx_c, rx, day, seed, ref_per_tx=200):
+def build_abc(index, kind, alpha, n_avg, tx_a, tx_c, rx, day, seed, ref_per_tx=200, eq=0):
     rng = np.random.default_rng(seed)
     txs = D.available(index)[0]
 
     feats_all = []
     for tx in txs:
         try:
-            x = D.get_complex(index, tx, rx, day)
+            x = D.get_complex(index, tx, rx, day, eq)
         except KeyError:
             continue
         sel = rng.permutation(len(x))[:ref_per_tx]
         feats_all.append(P.features(x[sel], kind))
     ref = P.reference_mean(feats_all)
 
-    xa = D.get_complex(index, tx_a, rx, day)
+    xa = D.get_complex(index, tx_a, rx, day, eq)
     xa = xa[rng.permutation(len(xa))]
-    xc = D.get_complex(index, tx_c, rx, day)
+    xc = D.get_complex(index, tx_c, rx, day, eq)
     xc = xc[rng.permutation(len(xc))]
     n = min(n_avg, len(xa) // 2, len(xc))
     fa = P.features(xa[:n], kind)
@@ -45,7 +45,7 @@ def build_abc(index, kind, alpha, n_avg, tx_a, tx_c, rx, day, seed, ref_per_tx=2
 
 def single(index, args):
     datums, n = build_abc(index, args.kind, args.alpha, args.n_avg,
-                          args.tx_a, args.tx_c, args.rx, args.day, args.seed)
+                          args.tx_a, args.tx_c, args.rx, args.day, args.seed, eq=args.eq)
     states = [E.amplitude_encode(v) for v in datums]
     names = ["A", "B", "C"]
     rng = np.random.default_rng(args.seed)
@@ -99,7 +99,7 @@ def sweep(index, args):
         for alpha in (0.0, 0.5, 0.8, 0.9, 0.95, 1.0):
             for n_avg in (1, 10, 50):
                 datums, n = build_abc(index, kind, alpha, n_avg, args.tx_a, args.tx_c,
-                                      args.rx, args.day, args.seed)
+                                      args.rx, args.day, args.seed, eq=args.eq)
                 s = [E.amplitude_encode(v) for v in datums]
                 fab, fac, fbc = M.fidelity(s[0], s[1]), M.fidelity(s[0], s[2]), M.fidelity(s[1], s[2])
                 score = abs(fab - TARGET_AB) + abs((fac + fbc) / 2 - TARGET_AC)
@@ -109,7 +109,7 @@ def sweep(index, args):
     print(f"{'score':>6} {'kind':<8}{'alpha':>6}{'n_avg':>6}{'F_AB':>8}{'F_AC':>8}{'F_BC':>8}")
     for r in rows[:args.top]:
         print(f"{r[0]:>6.3f} {r[1]:<8}{r[2]:>6}{r[3]:>6}{r[4]:>8.3f}{r[5]:>8.3f}{r[6]:>8.3f}")
-    out = Path("results") / "sweep.csv"
+    out = Path("results") / f"sweep_eq{args.eq}.csv"
     out.parent.mkdir(exist_ok=True)
     with open(out, "w", newline="") as fh:
         w = csv.writer(fh)
@@ -125,6 +125,7 @@ if __name__ == "__main__":
     ap.add_argument("--tx-c", type=int, default=1)
     ap.add_argument("--rx", type=int, default=0)
     ap.add_argument("--day", type=int, default=0)
+    ap.add_argument("--eq", type=int, default=0, choices=(0, 1))
     ap.add_argument("--kind", choices=P.KINDS, default="fft_mag")
     ap.add_argument("--alpha", type=float, default=0.9)
     ap.add_argument("--n-avg", type=int, default=50)

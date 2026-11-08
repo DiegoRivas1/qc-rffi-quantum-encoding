@@ -39,10 +39,11 @@ def available(index):
     return [sorted(set(c), key=str) for c in cols]
 
 
-def get_complex(index, tx, rx, day):
-    """Capturas (N, 256) complejas para un (tx, rx, dia)."""
-    parts = [a for p, a in index.items() if p[:3] == (tx, rx, day)]
+def get_complex(index, tx, rx, day, eq=0):
+    """Capturas (N, 256) complejas para un (tx, rx, dia, equalized)."""
+    parts = [a for p, a in index.items()
+             if p[:3] == (tx, rx, day) and (len(p) < 4 or p[3] == eq)]
     if not parts:
-        raise KeyError(f"No hay capturas para tx={tx}, rx={rx}, dia={day}")
+        raise KeyError(f"No hay capturas para tx={tx}, rx={rx}, dia={day}, eq={eq}")
     arr = np.concatenate(parts, axis=0).astype(np.float64)
     return arr[..., 0] + 1j * arr[..., 1]
