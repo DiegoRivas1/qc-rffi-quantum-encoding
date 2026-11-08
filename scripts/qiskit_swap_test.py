@@ -45,11 +45,12 @@ if __name__ == "__main__":
     ap.add_argument("--n-avg", type=int, default=50)
     ap.add_argument("--shots", type=int, default=8192)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--eq", type=int, default=0, choices=(0, 1))
     args = ap.parse_args()
 
     index = D.index_signals(D.load_pkl(args.pkl))
     datums, _ = build_abc(index, args.kind, args.alpha, args.n_avg,
-                          args.tx_a, args.tx_c, args.rx, args.day, args.seed)
+                          args.tx_a, args.tx_c, args.rx, args.day, args.seed, eq=args.eq)
     s = [E.amplitude_encode(v) for v in datums]
     sim = AerSimulator()
     for (i, j, name) in [(0, 1, "A-B"), (0, 2, "A-C"), (1, 2, "B-C")]:
